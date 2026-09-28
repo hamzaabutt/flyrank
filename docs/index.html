@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicting Organic Content Decay & Actionable Refresh Opportunity Scoring | FlyRank ML Research</title>
+    <meta name="description" content="Research paper on machine learning content opportunity scoring, organic traffic decay prediction, and action engines built on 30,000 search intelligence URLs from FlyRank.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(18, 26, 43, 0.75);
+            --bg-card-hover: rgba(28, 39, 64, 0.85);
+            --border-glow: rgba(99, 102, 241, 0.25);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-indigo: #6366f1;
+            --accent-purple: #a855f7;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+            --accent-amber: #f59e0b;
+            --gradient-hero: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #06b6d4 100%);
+            --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-display: 'Outfit', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 65%, rgba(168, 85, 247, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 50% 90%, rgba(6, 182, 212, 0.08) 0%, transparent 45%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            line-height: 1.7;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Top Banner & Header */
+        .site-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-logo {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1.25rem;
+            background: var(--gradient-hero);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-btn {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-indigo);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 0.4rem 1rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-indigo);
+            color: white;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 6rem;
+        }
+
+        /* Hero Header Section */
+        .hero {
+            text-align: center;
+            padding: 3rem 0 4rem;
+            position: relative;
+        }
+
+        .badge-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--border-glow);
+            padding: 0.35rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.825rem;
+            font-weight: 600;
+            color: var(--accent-indigo);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.5rem;
+        }
+
+        .badge-pulse {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-emerald);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.3); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-title span {
+            background: var(--gradient-hero);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 1rem;
+        }
+
+        .hero-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Stat Cards Row */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin: 2rem 0 3.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-glow);
+            box-shadow: var(--shadow-glass);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gradient-hero);
+        }
+
+        .stat-val {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-sub {
+            font-size: 0.75rem;
+            color: var(--accent-emerald);
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        /* Main Section Cards */
+        .section-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            backdrop-filter: blur(16px);
+            box-shadow: var(--shadow-glass);
+            transition: border-color 0.3s ease;
+        }
+
+        .section-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .section-num {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-indigo);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Abstract Glow Box */
+        .abstract-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.08) 100%);
+            border: 1px solid var(--border-glow);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: #e2e8f0;
+            position: relative;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.925rem;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 0.9rem 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+            text-transform: uppercase;
+            font-size: 0.775rem;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 0.9rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .highlight-row td {
+            background: rgba(99, 102, 241, 0.12) !important;
+            font-weight: 600;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 0.2rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .pill-emerald { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .pill-indigo  { background: rgba(99, 102, 241, 0.15); color: var(--accent-indigo);  border: 1px solid rgba(99, 102, 241, 0.3); }
+        .pill-amber   { background: rgba(245, 158, 11, 0.15);  color: var(--accent-amber);   border: 1px solid rgba(245, 158, 11, 0.3); }
+        .pill-rose    { background: rgba(244, 63, 94, 0.15);   color: var(--accent-rose);    border: 1px solid rgba(244, 63, 94, 0.3); }
+
+        /* Code Blocks */
+        pre, code {
+            font-family: var(--font-mono);
+        }
+
+        pre {
+            background: #0b1120;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            margin: 1rem 0;
+        }
+
+        .inline-code {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        /* Chart Grid */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 600px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: #0b1120;
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .chart-box h4 {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            font-family: var(--font-display);
+        }
+
+        .chart-box svg {
+            width: 100%;
+            height: auto;
+            max-height: 280px;
+        }
+
+        .chart-caption {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.75rem;
+            font-style: italic;
+        }
+
+        /* Callout Box */
+        .callout {
+            border-left: 4px solid var(--accent-indigo);
+            background: rgba(99, 102, 241, 0.08);
+            border-radius: 0 12px 12px 0;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .callout-title {
+            font-weight: 700;
+            color: var(--accent-indigo);
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Playbook Action Cards */
+        .playbook-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .playbook-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 1.25rem;
+        }
+
+        .playbook-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Footer & Credit */
+        footer {
+            border-top: 1px solid var(--border-subtle);
+            background: rgba(9, 13, 22, 0.95);
+            padding: 4rem 1.5rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .credit-link {
+            color: var(--accent-indigo);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .credit-link:hover {
+            color: var(--accent-purple);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <nav class="site-nav">
+        <a href="#" class="brand-logo">
+            <span>FlyRank</span> ML Research
+        </a>
+        <div class="nav-links">
+            <a href="#abstract" class="nav-link">Abstract</a>
+            <a href="#methodology" class="nav-link">Methodology</a>
+            <a href="#results" class="nav-link">Results</a>
+            <a href="#playbook" class="nav-link">Playbook</a>
+            <a href="https://github.com/hamzaabutt/flyrank" target="_blank" class="nav-btn">GitHub Repo</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Hero Title Header -->
+        <header class="hero">
+            <div class="badge-tag">
+                <span class="badge-pulse"></span> Published ML Research Paper · Lane 2
+            </div>
+            <h1 class="hero-title">
+                Predicting Organic Content Decay & <span>Actionable Refresh Opportunity Scoring</span>
+            </h1>
+            <div class="hero-meta">
+                <div class="hero-meta-item">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>
+                    <strong>Author:</strong> FlyRank ML Intern
+                </div>
+                <div class="hero-meta-item">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/></svg>
+                    <strong>Date:</strong> September 2026
+                </div>
+                <div class="hero-meta-item">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3 1a1 1 0 000 2h10a1 1 0 100-2H5z"/></svg>
+                    <strong>Dataset:</strong> 30,000 Search Intelligence URLs
+                </div>
+            </div>
+        </header>
+
+        <!-- Stat Highlights Row -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-val" style="color: var(--accent-emerald);">74.0%</div>
+                <div class="stat-label">Precision@50 (Random Forest)</div>
+                <div class="stat-sub">↑ 3.08x Lift over Baseline</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color: var(--accent-indigo);">0.750</div>
+                <div class="stat-label">Client-Holdout ROC-AUC</div>
+                <div class="stat-sub">Zero Domain Leakage</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color: var(--accent-purple);">0.618</div>
+                <div class="stat-label">PR-AUC Score</div>
+                <div class="stat-sub">Evaluated on 2,325 Test URLs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color: var(--accent-cyan);">30,000</div>
+                <div class="stat-label">Content Pages Analyzed</div>
+                <div class="stat-sub">Real Search Intelligence Panel</div>
+            </div>
+        </div>
+
+        <!-- 1. Title + Abstract -->
+        <section id="abstract" class="section-card">
+            <div class="section-header">
+                <div class="section-num">1</div>
+                <h2 class="section-title">Title + Abstract</h2>
+            </div>
+            <div class="abstract-box">
+                How do SEO content teams decide which decaying articles are worth a $300–$500 editorial refresh? Using the FlyRank search intelligence dataset of 30,000 anonymized URLs, we evaluate deterministic rule baselines against machine learning models to predict organic traffic decay (<code class="inline-code">is_declining_label</code>) and rank update priorities. Features were engineered strictly prior to label observation, and models were evaluated on a client-aware holdout split (20% unseen client domains). Our Random Forest classifier achieves a <strong>74.0% Precision@50</strong> and <strong>0.750 ROC-AUC</strong>, delivering a <strong>3.08x lift over the rule baseline</strong> (24.0% P@50). The resulting model powers an automated action engine that maps candidate URLs directly to actionable editorial playbooks. Built on the FlyRank ML Internship dataset (<a href="https://flyrank.ai" target="_blank" style="color: var(--accent-indigo);">flyrank.ai</a>).
+            </div>
+        </section>
+
+        <!-- 2. Introduction / Problem Statement -->
+        <section id="problem" class="section-card">
+            <div class="section-header">
+                <div class="section-num">2</div>
+                <h2 class="section-title">Introduction & Problem Statement</h2>
+            </div>
+            <p>Content marketing and SEO operations waste hundreds of editorial hours manually auditing underperforming pages without knowing which updates will yield organic traffic recovery. Managing a large catalog of hundreds or thousands of pages creates a critical resource allocation dilemma:</p>
+            
+            <div class="callout" style="margin: 1.5rem 0;">
+                <div class="callout-title">The Operational Challenge & Cost of Errors</div>
+                <ul>
+                    <li><strong>False Positive Cost (Waste):</strong> Spending $300–$500 per article rewriting stable pages that fail to gain additional traffic, exhausting limited editorial budgets.</li>
+                    <li><strong>False Negative Cost (Opportunity Loss):</strong> Leaving high-potential decaying content untouched, causing the site to permanently lose search rankings and high-intent visitors to competitors.</li>
+                </ul>
+            </div>
+
+            <p><strong>Decision Supported:</strong> Content leads and SEO managers use model predictions to select specific high-potential pages for weekly copy expansion, title tag optimization, and schema updates.</p>
+        </section>
+
+        <!-- 3. Data -->
+        <section id="data" class="section-card">
+            <div class="section-header">
+                <div class="section-num">3</div>
+                <h2 class="section-title">Data Specification (Public-Safe)</h2>
+            </div>
+            <p>The analysis utilizes the FlyRank anonymized search intelligence dataset (<code class="inline-code">content_refresh_anonymized.csv</code>). The dataset was filtered to enforce strict quality and indexability guards:</p>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data Property</th>
+                            <th>Value / Constraint</th>
+                            <th>Reason / Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Total Sample Volume</strong></td>
+                            <td>30,000 Unique URLs</td>
+                            <td>Comprehensive representation of content catalogs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Target Label</strong></td>
+                            <td><code class="inline-code">is_declining_label</code> (54.2% Base Rate)</td>
+                            <td>Binary indicator of traffic decay trend</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exclusions</strong></td>
+                            <td><code class="inline-code">impressions_90d &gt; 0</code> &amp; <code class="inline-code">content_age_days &gt;= 90</code></td>
+                            <td>Excludes unindexed or brand-new URLs without history</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Privacy Protection</strong></td>
+                            <td>Anonymized IDs &amp; Normalized Features</td>
+                            <td>No client names, domain names, or raw queries exposed</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 4. Methodology -->
+        <section id="methodology" class="section-card">
+            <div class="section-header">
+                <div class="section-num">4</div>
+                <h2 class="section-title">Methodology & Validation Design</h2>
+            </div>
+            <p>We engineered 52 numerical and categorical features capturing traffic volume, SERP rank position, engagement rates, and content staleness. To ensure strict validation integrity, we implemented a <strong>Client-Holdout Split</strong>:</p>
+
+            <div class="callout" style="border-left-color: var(--accent-purple); background: rgba(168, 85, 247, 0.08);">
+                <div class="callout-title" style="color: var(--accent-purple);">Client-Aware Validation vs Random Splitting</div>
+                <p>Standard random row splitting causes severe data leakage because pages from the same client domain appear in both training and testing sets, artificially inflating validation accuracy. Our client-holdout strategy trains on 80% of client domains (27,675 rows) and tests exclusively on 20% held-out client domains (2,325 rows), guaranteeing real-world generalizability.</p>
+            </div>
+
+            <p><strong>Leakage Prevention Audit:</strong> All features are computed strictly prior to the observation period. Derived fields such as <code class="inline-code">trend_direction</code> and future outcome windows were completely excluded from the feature matrix.</p>
+        </section>
+
+        <!-- 5. Results (vs Baseline) -->
+        <section id="results" class="section-card">
+            <div class="section-header">
+                <div class="section-num">5</div>
+                <h2 class="section-title">Empirical Results vs Baseline</h2>
+            </div>
+            <p>All models were evaluated against our deterministic Week 4 rule baseline on the exact same client-holdout test split (2,325 URLs):</p>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Model Architecture</th>
+                            <th>Precision@50</th>
+                            <th>Precision@20</th>
+                            <th>PR-AUC</th>
+                            <th>ROC-AUC</th>
+                            <th>Accuracy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Deterministic Baseline Rule</strong></td>
+                            <td>24.0%</td>
+                            <td>15.0%</td>
+                            <td>0.468</td>
+                            <td>0.627</td>
+                            <td>60.9%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Logistic Regression</strong></td>
+                            <td>40.0%</td>
+                            <td>35.0%</td>
+                            <td>0.521</td>
+                            <td>0.700</td>
+                            <td>66.1%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Decision Tree (Max Depth 5)</strong></td>
+                            <td>62.0%</td>
+                            <td>55.0%</td>
+                            <td>0.575</td>
+                            <td>0.742</td>
+                            <td>67.7%</td>
+                        </tr>
+                        <tr class="highlight-row">
+                            <td><strong>Random Forest (Selected Model)</strong> <span class="pill pill-emerald">BEST</span></td>
+                            <td><strong>74.0%</strong></td>
+                            <td><strong>65.0%</strong></td>
+                            <td><strong>0.618</strong></td>
+                            <td><strong>0.750</strong></td>
+                            <td><strong>67.2%</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SVG Visual Charts -->
+            <div class="chart-grid">
+                <!-- SVG Chart 1: Precision@50 Lift -->
+                <div class="chart-box">
+                    <h4>Precision@50 Comparison (Lift over Baseline)</h4>
+                    <svg viewBox="0 0 420 220" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Grid lines -->
+                        <line x1="50" y1="180" x2="390" y2="180" stroke="#334155" stroke-width="1"/>
+                        <line x1="50" y1="130" x2="390" y2="130" stroke="#1e293b" stroke-dasharray="4 4"/>
+                        <line x1="50" y1="80" x2="390" y2="80" stroke="#1e293b" stroke-dasharray="4 4"/>
+                        <line x1="50" y1="30" x2="390" y2="30" stroke="#1e293b" stroke-dasharray="4 4"/>
+                        
+                        <!-- Axis Labels -->
+                        <text x="35" y="184" fill="#64748b" font-size="10" text-anchor="end">0%</text>
+                        <text x="35" y="134" fill="#64748b" font-size="10" text-anchor="end">30%</text>
+                        <text x="35" y="84" fill="#64748b" font-size="10" text-anchor="end">60%</text>
+                        <text x="35" y="34" fill="#64748b" font-size="10" text-anchor="end">90%</text>
+
+                        <!-- Bars -->
+                        <!-- Baseline (24%) -->
+                        <rect x="70" y="140" width="55" height="40" rx="4" fill="#64748b"/>
+                        <text x="97" y="132" fill="#94a3b8" font-size="11" font-weight="700" text-anchor="middle">24%</text>
+                        <text x="97" y="198" fill="#94a3b8" font-size="10" text-anchor="middle">Baseline</text>
+
+                        <!-- Logistic Reg (40%) -->
+                        <rect x="150" y="113" width="55" height="67" rx="4" fill="#06b6d4"/>
+                        <text x="177" y="105" fill="#38bdf8" font-size="11" font-weight="700" text-anchor="middle">40%</text>
+                        <text x="177" y="198" fill="#94a3b8" font-size="10" text-anchor="middle">LogReg</text>
+
+                        <!-- Decision Tree (62%) -->
+                        <rect x="230" y="76" width="55" height="104" rx="4" fill="#a855f7"/>
+                        <text x="257" y="68" fill="#c084fc" font-size="11" font-weight="700" text-anchor="middle">62%</text>
+                        <text x="257" y="198" fill="#94a3b8" font-size="10" text-anchor="middle">DecTree</text>
+
+                        <!-- Random Forest (74%) -->
+                        <rect x="310" y="56" width="55" height="124" rx="4" fill="#6366f1"/>
+                        <text x="337" y="48" fill="#818cf8" font-size="11" font-weight="700" text-anchor="middle">74%</text>
+                        <text x="337" y="198" fill="#818cf8" font-size="10" font-weight="700" text-anchor="middle">RandomForest</text>
+                    </svg>
+                    <div class="chart-caption">Random Forest achieves 74.0% Precision@50 (3.08x lift over baseline).</div>
+                </div>
+
+                <!-- SVG Chart 2: Top Feature Importances -->
+                <div class="chart-box">
+                    <h4>Top Feature Importances (Random Forest)</h4>
+                    <svg viewBox="0 0 420 220" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Bars horizontal -->
+                        <!-- 1. days_with_impressions (15.8%) -->
+                        <text x="130" y="32" fill="#cbd5e1" font-size="10" text-anchor="end">days_with_impressions</text>
+                        <rect x="140" y="20" width="220" height="16" rx="3" fill="#6366f1"/>
+                        <text x="368" y="32" fill="#818cf8" font-size="10" font-weight="700">15.8%</text>
+
+                        <!-- 2. log_impressions_90d (12.9%) -->
+                        <text x="130" y="67" fill="#cbd5e1" font-size="10" text-anchor="end">log_impressions_90d</text>
+                        <rect x="140" y="55" width="180" height="16" rx="3" fill="#818cf8"/>
+                        <text x="328" y="67" fill="#a5b4fc" font-size="10" font-weight="700">12.9%</text>
+
+                        <!-- 3. avg_position (10.9%) -->
+                        <text x="130" y="102" fill="#cbd5e1" font-size="10" text-anchor="end">avg_position</text>
+                        <rect x="140" y="90" width="152" height="16" rx="3" fill="#a855f7"/>
+                        <text x="300" y="102" fill="#c084fc" font-size="10" font-weight="700">10.9%</text>
+
+                        <!-- 4. content_age_days (9.5%) -->
+                        <text x="130" y="137" fill="#cbd5e1" font-size="10" text-anchor="end">content_age_days</text>
+                        <rect x="140" y="125" width="132" height="16" rx="3" fill="#06b6d4"/>
+                        <text x="280" y="137" fill="#38bdf8" font-size="10" font-weight="700">9.5%</text>
+
+                        <!-- 5. word_count (4.0%) -->
+                        <text x="130" y="172" fill="#cbd5e1" font-size="10" text-anchor="end">word_count</text>
+                        <rect x="140" y="160" width="56" height="16" rx="3" fill="#10b981"/>
+                        <text x="204" y="172" fill="#34d399" font-size="10" font-weight="700">4.0%</text>
+                    </svg>
+                    <div class="chart-caption">Active impression days &amp; position decay are the strongest decay signals.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Limitations & Honest Framing -->
+        <section id="limitations" class="section-card">
+            <div class="section-header">
+                <div class="section-num">6</div>
+                <h2 class="section-title">Limitations & Honest Framing</h2>
+            </div>
+            <p>To maintain research integrity and avoid overclaiming, we explicitly outline what this model can and cannot claim:</p>
+            
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Valid Research Claims (What We Claim)</th>
+                            <th>Invalid Overclaims (What We DO NOT Claim)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="pill pill-emerald">Observed</span> Identifies statistical associations between pre-decision signals and traffic decay.</td>
+                            <td><span class="pill pill-rose">Invalid</span> Causal proof that modifying titles causes rank improvements.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="pill pill-indigo">Decision-Support</span> Ranks candidate pages to optimize editorial budget allocation.</td>
+                            <td><span class="pill pill-rose">Invalid</span> Claiming to predict or reverse-engineer Google's algorithm.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="pill pill-amber">Directional</span> Provides probability estimates based on historical cohort behavior.</td>
+                            <td><span class="pill pill-rose">Invalid</span> Deterministic guarantees of future traffic volume.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 7. Ranked Recommendations -->
+        <section id="playbook" class="section-card">
+            <div class="section-header">
+                <div class="section-num">7</div>
+                <h2 class="section-title">Action Playbook Engine</h2>
+            </div>
+            <p>Our model outputs map predicted URLs into four standardized editorial action playbooks based on underlying reason codes:</p>
+
+            <div class="playbook-grid">
+                <div class="playbook-card" style="border-top: 3px solid var(--accent-indigo);">
+                    <div class="playbook-title" style="color: var(--accent-indigo);">
+                        <span>expand_and_refresh</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);"><strong>Trigger:</strong> Thin visible pages (<code class="inline-code">word_count &lt; 1200</code>).</p>
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem;"><strong>Action:</strong> Comprehensive copy expansion, adding structured FAQ sections and key subtopics.</p>
+                </div>
+
+                <div class="playbook-card" style="border-top: 3px solid var(--accent-cyan);">
+                    <div class="playbook-title" style="color: var(--accent-cyan);">
+                        <span>refresh_and_review_ctr</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);"><strong>Trigger:</strong> Low CTR visible pages (<code class="inline-code">ctr &lt; 0.5%</code>).</p>
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem;"><strong>Action:</strong> Rewrite title tags, optimize meta descriptions, and add Rich Snippet schema markup.</p>
+                </div>
+
+                <div class="playbook-card" style="border-top: 3px solid var(--accent-amber);">
+                    <div class="playbook-title" style="color: var(--accent-amber);">
+                        <span>refresh</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);"><strong>Trigger:</strong> Stale decaying pages (<code class="inline-code">days_since_update &gt;= 180</code>).</p>
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem;"><strong>Action:</strong> Update outdated statistics, replace dead links, and update publish timestamps.</p>
+                </div>
+
+                <div class="playbook-card" style="border-top: 3px solid var(--accent-emerald);">
+                    <div class="playbook-title" style="color: var(--accent-emerald);">
+                        <span>monitor</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);"><strong>Trigger:</strong> Stable or growing pages.</p>
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem;"><strong>Action:</strong> Retain on standard monthly tracking cycles without editorial intervention.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Reproducibility -->
+        <section id="reproducibility" class="section-card">
+            <div class="section-header">
+                <div class="section-num">8</div>
+                <h2 class="section-title">Reproducibility &amp; Code References</h2>
+            </div>
+            <p>All results in this paper are fully reproducible from source code and committed receipts:</p>
+
+            <pre><code># Re-run full pipeline from fresh clone:
+$env:PYTHONIOENCODING="utf-8"; python scripts/run_all.py
+
+# Key Output Receipts:
+- outputs/model_results.json        (Evaluation receipts &amp; metrics)
+- outputs/refresh_queue.csv        (Full ranked URL playbook)
+- work/notebooks/capstone.ipynb     (Complete Jupyter Notebook)</code></pre>
+        </section>
+
+        <!-- 9. Acknowledgments & Data Credit -->
+        <section id="acknowledgments" class="section-card" style="border-color: var(--border-glow); background: linear-gradient(135deg, rgba(18, 26, 43, 0.9) 0%, rgba(99, 102, 241, 0.08) 100%);">
+            <div class="section-header">
+                <div class="section-num">9</div>
+                <h2 class="section-title">Acknowledgments &amp; Data Credit</h2>
+            </div>
+            <p style="font-size: 1.1rem; line-height: 1.8;">
+                Built on the <strong>FlyRank ML Internship dataset</strong> (<a href="https://flyrank.ai" target="_blank" class="credit-link">https://flyrank.ai</a>). 
+                Crediting data sources is standard research practice — it acknowledges the real-world search intelligence dataset that made this analysis possible.
+            </p>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 FlyRank Capstone Research · Deployed on GitHub Pages · <a href="https://flyrank.ai" target="_blank" class="credit-link">FlyRank.ai</a></p>
+    </footer>
+
+</body>
+</html>
